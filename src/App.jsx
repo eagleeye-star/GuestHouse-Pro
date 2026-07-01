@@ -1355,6 +1355,21 @@ export default function GuestHousePro() {
     setRenewMode(false);
     showToast("Licence activated! Welcome to GuestHouse Pro. 🎉");
   };
+  // ── Auto-activate from portal launch URL ─────────────────────────────────
+  useEffect(() => {
+    const urlKey = new URLSearchParams(window.location.search).get('key');
+    if (urlKey && !loadLicense()) {
+      const k = urlKey.toUpperCase().trim();
+      if (/^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(k)) {
+        const plan = k.split("-")[1]||"";
+        const days = plan==="TRIAL"?TRIAL_DAYS:plan==="1M"?30:plan==="6M"?182:plan==="12M"?365:/^\d+Y$/.test(plan)?Math.round(parseInt(plan)*365):365;
+        const expiry = new Date(); expiry.setDate(expiry.getDate()+days);
+        const lic = { type:"licensed", key:k, expiry:expiry.toISOString(), issued:new Date().toISOString() };
+        saveLicense(lic); setLicenseState(lic);
+        window.history.replaceState({},document.title,window.location.pathname);
+      }
+    }
+  }, []);
 
   const unlock = (isAdmin) => { setLocked(false); };
 
